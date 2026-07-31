@@ -2,7 +2,7 @@
 
 Official Home Assistant custom integration for prayer times from the [pray.zone API](https://pray.zone/api).
 
-It creates sensors for Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha, the next prayer, the next prayer name, location metadata, and Qibla bearing. If the API adds Iqama or Jumu'a fields, those timestamp sensors are exposed automatically. The integration refreshes automatically every 15 minutes and groups all entities under one Home Assistant device.
+It creates sensors for Fajr, Sunrise, Dhuhr, Asr, Maghrib, Isha, the next prayer, the next prayer name, location metadata, and Qibla bearing. You can use a city, a nearby mosque, or Home Assistant's own GPS location (calculated through the pray.zone coordinates API). If the API adds Iqama or Jumu'a fields, those timestamp sensors are exposed automatically. The integration refreshes automatically every 15 minutes and groups all entities under one Home Assistant device.
 
 The current public API exposes daily prayer times, Qibla, calculation metadata, city data, mosque data, and nearby-mosque discovery. Iqama and Jumu'a sensors are deliberately created only when those fields are returned by the API.
 
@@ -11,7 +11,7 @@ The current public API exposes daily prayer times, Qibla, calculation metadata, 
 1. In HACS, open **Integrations** → **⋮** → **Custom repositories**.
 2. Add `https://github.com/PrayerZone/prayer-times-home-assistant` as an **Integration**.
 3. Install **PrayerZone**, restart Home Assistant, and add **PrayerZone** from **Settings → Devices & services**.
-4. Choose a city identifier such as `paris`, or choose a nearby mosque using Home Assistant's configured GPS coordinates.
+4. Choose your Home Assistant location, a city identifier such as `paris`, or a nearby mosque using Home Assistant's configured GPS coordinates.
 
 ## Automations
 

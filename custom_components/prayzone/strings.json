@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "PrayerZone",
-        "description": "Choose a city or discover a nearby mosque using your Home Assistant location.",
+        "description": "Use your Home Assistant location, choose a city, or discover a nearby mosque.",
         "data": {"source": "Location type", "language": "Language"}
       },
       "city": {

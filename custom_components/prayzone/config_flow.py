@@ -16,6 +16,7 @@ from .const import (
     DOMAIN,
     LANGUAGES,
     SOURCE_CITY,
+    SOURCE_LOCATION,
     SOURCE_MOSQUE,
 )
 
@@ -29,9 +30,18 @@ class PrayerZoneConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._source = user_input[CONF_SOURCE]
             if self._source == SOURCE_MOSQUE:
                 return await self.async_step_mosque()
+            if self._source == SOURCE_LOCATION:
+                if self.hass.config.latitude is None or self.hass.config.longitude is None:
+                    return self.async_show_form(step_id="user", data_schema=vol.Schema({
+                        vol.Required(CONF_SOURCE, default=SOURCE_LOCATION): vol.In({SOURCE_LOCATION: "My Home Assistant location", SOURCE_CITY: "City", SOURCE_MOSQUE: "Nearby mosque"}),
+                        vol.Required(CONF_LANGUAGE, default=self._language): vol.In(LANGUAGES),
+                    }), errors={"base": "no_location"})
+                await self.async_set_unique_id("location")
+                self._abort_if_unique_id_configured()
+                return self.async_create_entry(title="PrayerZone · Home location", data={CONF_LANGUAGE: self._language, CONF_SOURCE: SOURCE_LOCATION})
             return await self.async_step_city()
         schema = vol.Schema({
-            vol.Required(CONF_SOURCE, default=SOURCE_CITY): vol.In({SOURCE_CITY: "City", SOURCE_MOSQUE: "Nearby mosque"}),
+            vol.Required(CONF_SOURCE, default=SOURCE_CITY): vol.In({SOURCE_LOCATION: "My Home Assistant location", SOURCE_CITY: "City", SOURCE_MOSQUE: "Nearby mosque"}),
             vol.Required(CONF_LANGUAGE, default=DEFAULT_LANGUAGE): vol.In(LANGUAGES),
         })
         return self.async_show_form(step_id="user", data_schema=schema)
@@ -85,9 +95,12 @@ class PrayerZoneOptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is not None:
             data = dict(self.config_entry.data)
             identifier_key = CONF_MOSQUE_ID if data.get(CONF_SOURCE) == SOURCE_MOSQUE else CONF_CITY_ID
-            data[identifier_key] = user_input[identifier_key].strip().lower()
+            if data.get(CONF_SOURCE) != SOURCE_LOCATION:
+                data[identifier_key] = user_input[identifier_key].strip().lower()
             data[CONF_LANGUAGE] = user_input[CONF_LANGUAGE]
             self.hass.config_entries.async_update_entry(self.config_entry, data=data)
             return self.async_create_entry(title="", data={})
+        if self.config_entry.data.get(CONF_SOURCE) == SOURCE_LOCATION:
+            return self.async_show_form(step_id="init", data_schema=vol.Schema({vol.Required(CONF_LANGUAGE, default=self.config_entry.data[CONF_LANGUAGE]): vol.In(LANGUAGES)}))
         identifier_key = CONF_MOSQUE_ID if self.config_entry.data.get(CONF_SOURCE) == SOURCE_MOSQUE else CONF_CITY_ID
         return self.async_show_form(step_id="init", data_schema=vol.Schema({vol.Required(identifier_key, default=self.config_entry.data[identifier_key]): str, vol.Required(CONF_LANGUAGE, default=self.config_entry.data[CONF_LANGUAGE]): vol.In(LANGUAGES)}))

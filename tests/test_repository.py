@@ -8,7 +8,7 @@ def test_manifest_is_hacs_compatible():
     manifest = json.loads((ROOT / "custom_components/prayzone/manifest.json").read_text())
     assert manifest["domain"] == "prayzone"
     assert manifest["config_flow"] is True
-    assert manifest["version"] == "0.2.0"
+    assert manifest["version"] == "0.3.0"
 
 
 def test_attribution_is_present_in_readme():
