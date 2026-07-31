@@ -9,13 +9,17 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import DeviceInfo, EntityCategory
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import ATTRIBUTION, DOMAIN, PRAYER_KEYS, SOURCE_MOSQUE
+from .const import ATTRIBUTION, DOMAIN, PRAYER_KEYS, SOURCE_LOCATION, SOURCE_MOSQUE
 from .coordinator import PrayerZoneCoordinator
 
 
 def _prayers(coordinator):
     raw = coordinator.data.get("data", {}).get("prayerTimes", [])
-    return {str(item.get("name", "")).lower(): item for item in raw if isinstance(item, dict)}
+    return {
+        str(item.get("id") or item.get("name", "")).lower(): item
+        for item in raw
+        if isinstance(item, dict)
+    }
 
 
 def _time_value(coordinator, item):
@@ -81,6 +85,13 @@ class NextPrayerSensor(PrayerSensor):
 
     @property
     def native_value(self):
+        explicit = self.coordinator.data.get("data", {}).get("nextPrayer")
+        if isinstance(explicit, dict) and explicit.get("date") and explicit.get("time"):
+            timezone = self.coordinator.data.get("data", {}).get("timezone", "UTC")
+            try:
+                return datetime.fromisoformat(f"{explicit['date']}T{explicit['time']}").replace(tzinfo=ZoneInfo(timezone))
+            except (TypeError, ValueError, ZoneInfoNotFoundError):
+                pass
         for item in _prayers(self.coordinator).values():
             if item.get("isNext"):
                 return _time_value(self.coordinator, item)
@@ -88,7 +99,8 @@ class NextPrayerSensor(PrayerSensor):
 
     @property
     def extra_state_attributes(self):
-        return {"prayer": next((item.get("name") for item in _prayers(self.coordinator).values() if item.get("isNext")), None), "source": "https://pray.zone/"}
+        explicit = self.coordinator.data.get("data", {}).get("nextPrayer") or {}
+        return {"prayer": explicit.get("name") or next((item.get("name") for item in _prayers(self.coordinator).values() if item.get("isNext")), None), "source": "https://pray.zone/"}
 
 
 class QiblaSensor(CoordinatorEntity[PrayerZoneCoordinator], SensorEntity):
@@ -104,11 +116,12 @@ class QiblaSensor(CoordinatorEntity[PrayerZoneCoordinator], SensorEntity):
 
     @property
     def native_value(self):
-        return self.coordinator.data.get("data", {}).get("qibla", {}).get("bearing")
+        qibla = self.coordinator.data.get("data", {}).get("qibla") or {}
+        return qibla.get("bearing")
 
     @property
     def extra_state_attributes(self):
-        qibla = self.coordinator.data.get("data", {}).get("qibla", {})
+        qibla = self.coordinator.data.get("data", {}).get("qibla") or {}
         return {"direction": qibla.get("direction"), "distance_to_mecca_km": qibla.get("distanceToMeccaKm"), "source": "https://pray.zone/"}
 
     @property
@@ -127,7 +140,8 @@ class NextPrayerNameSensor(CoordinatorEntity[PrayerZoneCoordinator], SensorEntit
 
     @property
     def native_value(self):
-        return next((item.get("name") for item in _prayers(self.coordinator).values() if item.get("isNext")), None)
+        explicit = self.coordinator.data.get("data", {}).get("nextPrayer") or {}
+        return explicit.get("name") or next((item.get("name") for item in _prayers(self.coordinator).values() if item.get("isNext")), None)
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -146,13 +160,13 @@ class LocationSensor(CoordinatorEntity[PrayerZoneCoordinator], SensorEntity):
 
     @property
     def native_value(self):
-        location = self.coordinator.data.get("mosque" if self.coordinator.source == SOURCE_MOSQUE else "city", {})
-        return location.get("name") or location.get("title") or self.coordinator.identifier
+        location = _location(self.coordinator)
+        return location.get("name") or location.get("title") or _fallback_location_name(self.coordinator)
 
     @property
     def extra_state_attributes(self):
-        location = self.coordinator.data.get("mosque" if self.coordinator.source == SOURCE_MOSQUE else "city", {})
-        return {key: value for key, value in location.items() if key in {"id", "city", "country", "countryCode", "address", "timezone", "coordinates"}}
+        location = _location(self.coordinator)
+        return {key: value for key, value in location.items() if key in {"id", "city", "country", "countryCode", "address", "timezone", "coordinates", "latitude", "longitude", "altitude"}}
 
     @property
     def device_info(self) -> DeviceInfo:
@@ -160,8 +174,8 @@ class LocationSensor(CoordinatorEntity[PrayerZoneCoordinator], SensorEntity):
 
 
 def _device_info(coordinator, entry) -> DeviceInfo:
-    location = coordinator.data.get("mosque" if coordinator.source == SOURCE_MOSQUE else "city", {})
-    name = location.get("title") or location.get("name") or coordinator.identifier
+    location = _location(coordinator)
+    name = location.get("title") or location.get("name") or _fallback_location_name(coordinator)
     return DeviceInfo(
         identifiers={(DOMAIN, entry.entry_id)},
         name=f"PrayerZone · {name}",
@@ -169,3 +183,12 @@ def _device_info(coordinator, entry) -> DeviceInfo:
         model="Prayer times API",
         configuration_url="https://pray.zone/api",
     )
+
+
+def _location(coordinator):
+    key = "mosque" if coordinator.source == SOURCE_MOSQUE else "location" if coordinator.source == SOURCE_LOCATION else "city"
+    return coordinator.data.get(key, {}) or {}
+
+
+def _fallback_location_name(coordinator):
+    return "Home location" if coordinator.source == SOURCE_LOCATION else coordinator.identifier

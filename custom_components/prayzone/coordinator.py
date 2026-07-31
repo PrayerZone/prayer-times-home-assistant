@@ -9,14 +9,18 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .api import PrayerZoneApi, PrayerZoneApiError
 from .const import (
+    CONF_CALCULATION_METHOD,
     CONF_CITY_ID,
     CONF_LANGUAGE,
+    CONF_MADHAB,
     CONF_MOSQUE_ID,
     CONF_SOURCE,
+    DEFAULT_CALCULATION_METHOD,
+    DEFAULT_MADHAB,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
-    SOURCE_MOSQUE,
     SOURCE_LOCATION,
+    SOURCE_MOSQUE,
 )
 
 
@@ -29,6 +33,8 @@ class PrayerZoneCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.timezone = hass.config.time_zone
         self.hass = hass
         self.language = entry.data[CONF_LANGUAGE]
+        self.calculation_method = entry.data.get(CONF_CALCULATION_METHOD, DEFAULT_CALCULATION_METHOD)
+        self.madhab = entry.data.get(CONF_MADHAB, DEFAULT_MADHAB)
         self.source = entry.data.get(CONF_SOURCE, "city")
         self.api = PrayerZoneApi(async_get_clientsession(hass))
         super().__init__(hass, logger=__import__("logging").getLogger(__name__), name=DOMAIN, update_interval=DEFAULT_SCAN_INTERVAL)
@@ -38,7 +44,14 @@ class PrayerZoneCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if self.source == SOURCE_LOCATION:
                 if self.latitude is None or self.longitude is None:
                     raise PrayerZoneApiError("Home Assistant latitude and longitude are required")
-                return await self.api.location_prayer_times(self.latitude, self.longitude, self.timezone)
+                return await self.api.location_prayer_times(
+                    self.latitude,
+                    self.longitude,
+                    self.timezone,
+                    self.language,
+                    self.calculation_method,
+                    self.madhab,
+                )
             return await self.api.prayer_times(self.identifier, self.language, self.source)
         except PrayerZoneApiError as err:
             raise UpdateFailed(str(err)) from err

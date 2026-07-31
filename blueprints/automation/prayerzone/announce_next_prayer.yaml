@@ -27,15 +27,18 @@ blueprint:
 trigger:
   - platform: time_pattern
     minutes: "/1"
+variables:
+  next_prayer_entity: !input next_prayer
+  lead_minutes_value: !input lead_minutes
 condition:
   - condition: template
-      value_template: >-
-      {% set value = states(!input next_prayer) %}
+    value_template: >-
+      {% set value = states(next_prayer_entity) %}
       {{ value not in ['unknown', 'unavailable', 'none'] and
-         (as_timestamp(value) - now().timestamp() - (!input lead_minutes | int * 60)) | abs < 30 }}
+         (as_timestamp(value) - now().timestamp() - (lead_minutes_value | int * 60)) | abs < 30 }}
 action:
   - service: !input notify_service
     data:
       title: PrayerZone
-      message: "{{ state_attr(!input next_prayer, 'prayer') or 'Next prayer' }}"
+      message: "{{ state_attr(next_prayer_entity, 'prayer') or 'Next prayer' }}"
 mode: single

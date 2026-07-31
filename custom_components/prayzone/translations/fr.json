@@ -6,5 +6,6 @@
       "mosque": {"title": "Choisir une mosquée proche", "description": "Les mosquées sont recherchées dans un rayon de 5 km.", "data": {"mosque_id": "Mosquée"}}
     },
     "error": {"required": "Saisissez un identifiant de ville.", "no_location": "Définissez d'abord la latitude et la longitude de Home Assistant.", "no_mosques": "Aucune mosquée proche trouvée.", "cannot_connect": "Impossible de contacter pray.zone."}
-  }
+  },
+  "options": {"step": {"init": {"title": "Options PrayerZone", "data": {"city_id": "Identifiant de ville", "mosque_id": "Identifiant de mosquée", "language": "Langue", "calculation_method": "Méthode de calcul", "madhab": "Méthode juridique pour Asr"}}}}
 }

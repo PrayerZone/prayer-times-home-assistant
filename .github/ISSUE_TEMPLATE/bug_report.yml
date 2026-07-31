@@ -1,0 +1,35 @@
+name: Bug report
+description: Report a reproducible problem with the PrayerZone integration.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thank you for helping improve PrayerZone.
+  - type: input
+    id: version
+    attributes:
+      label: Integration version
+      placeholder: 0.4.0
+    validations:
+      required: true
+  - type: input
+    id: home_assistant
+    attributes:
+      label: Home Assistant version
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: Prayer source
+      options: [Home Assistant location, City, Nearby mosque]
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Include steps, expected behavior, and relevant logs with secrets removed.
+    validations:
+      required: true

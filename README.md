@@ -13,6 +13,26 @@ The current public API exposes daily prayer times, Qibla, calculation metadata, 
 3. Install **PrayerZone**, restart Home Assistant, and add **PrayerZone** from **Settings → Devices & services**.
 4. Choose your Home Assistant location, a city identifier such as `paris`, or a nearby mosque using Home Assistant's configured GPS coordinates.
 
+For the Home Assistant location mode, the integration automatically uses the configured latitude, longitude, and timezone. Its options let you keep the location-default calculation or select a recognized calculation method and choose the Shafi or Hanafi Asr convention.
+
+## Dashboard example
+
+After setup, add an Entities card and select the PrayerZone device. A compact manual card can look like this (adjust entity IDs to your installation):
+
+```yaml
+type: entities
+title: Prayer times
+entities:
+  - sensor.prayerzone_fajr
+  - sensor.prayerzone_dhuhr
+  - sensor.prayerzone_asr
+  - sensor.prayerzone_maghrib
+  - sensor.prayerzone_isha
+  - sensor.prayerzone_next_prayer
+  - sensor.prayerzone_next_prayer_name
+  - sensor.prayerzone_qibla_bearing
+```
+
 ## Automations
 
 Copy one of the included blueprints from `blueprints/automation/prayerzone/` into your Home Assistant blueprints folder to announce the next prayer or play an adhan on a media player. The timestamp and next-prayer-name entities can also be used directly in automations.
@@ -25,7 +45,7 @@ If prayer data is displayed publicly, attribution is mandatory. Keep the entity 
 
 ```bash
 python -m pytest
-ruff check .
+python -m ruff check custom_components tests
 ```
 
 This project is MIT licensed. PrayerZone API data remains subject to the API attribution requirement.

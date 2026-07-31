@@ -22,5 +22,6 @@
       "no_mosques": "No nearby mosques were found.",
       "cannot_connect": "Unable to contact pray.zone. Try again later."
     }
-  }
+  },
+  "options": {"step": {"init": {"title": "PrayerZone options", "data": {"city_id": "City identifier", "mosque_id": "Mosque identifier", "language": "Language", "calculation_method": "Calculation method", "madhab": "Asr juristic method"}}}}
 }

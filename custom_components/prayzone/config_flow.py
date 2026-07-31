@@ -7,14 +7,20 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import PrayerZoneApi, PrayerZoneApiError
 from .const import (
+    CALCULATION_METHODS,
+    CONF_CALCULATION_METHOD,
     CONF_CITY_ID,
     CONF_LANGUAGE,
+    CONF_MADHAB,
     CONF_MOSQUE_ID,
     CONF_SOURCE,
+    DEFAULT_CALCULATION_METHOD,
     DEFAULT_LANGUAGE,
+    DEFAULT_MADHAB,
     DEFAULT_MAX_DISTANCE,
     DOMAIN,
     LANGUAGES,
+    MADHABS,
     SOURCE_CITY,
     SOURCE_LOCATION,
     SOURCE_MOSQUE,
@@ -38,7 +44,12 @@ class PrayerZoneConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     }), errors={"base": "no_location"})
                 await self.async_set_unique_id("location")
                 self._abort_if_unique_id_configured()
-                return self.async_create_entry(title="PrayerZone · Home location", data={CONF_LANGUAGE: self._language, CONF_SOURCE: SOURCE_LOCATION})
+                return self.async_create_entry(title="PrayerZone · Home location", data={
+                    CONF_LANGUAGE: self._language,
+                    CONF_SOURCE: SOURCE_LOCATION,
+                    CONF_CALCULATION_METHOD: DEFAULT_CALCULATION_METHOD,
+                    CONF_MADHAB: DEFAULT_MADHAB,
+                })
             return await self.async_step_city()
         schema = vol.Schema({
             vol.Required(CONF_SOURCE, default=SOURCE_CITY): vol.In({SOURCE_LOCATION: "My Home Assistant location", SOURCE_CITY: "City", SOURCE_MOSQUE: "Nearby mosque"}),
@@ -98,9 +109,16 @@ class PrayerZoneOptionsFlowHandler(config_entries.OptionsFlow):
             if data.get(CONF_SOURCE) != SOURCE_LOCATION:
                 data[identifier_key] = user_input[identifier_key].strip().lower()
             data[CONF_LANGUAGE] = user_input[CONF_LANGUAGE]
+            if data.get(CONF_SOURCE) == SOURCE_LOCATION:
+                data[CONF_CALCULATION_METHOD] = user_input[CONF_CALCULATION_METHOD]
+                data[CONF_MADHAB] = user_input[CONF_MADHAB]
             self.hass.config_entries.async_update_entry(self.config_entry, data=data)
             return self.async_create_entry(title="", data={})
         if self.config_entry.data.get(CONF_SOURCE) == SOURCE_LOCATION:
-            return self.async_show_form(step_id="init", data_schema=vol.Schema({vol.Required(CONF_LANGUAGE, default=self.config_entry.data[CONF_LANGUAGE]): vol.In(LANGUAGES)}))
+            return self.async_show_form(step_id="init", data_schema=vol.Schema({
+                vol.Required(CONF_LANGUAGE, default=self.config_entry.data[CONF_LANGUAGE]): vol.In(LANGUAGES),
+                vol.Required(CONF_CALCULATION_METHOD, default=self.config_entry.data.get(CONF_CALCULATION_METHOD, DEFAULT_CALCULATION_METHOD)): vol.In(CALCULATION_METHODS),
+                vol.Required(CONF_MADHAB, default=self.config_entry.data.get(CONF_MADHAB, DEFAULT_MADHAB)): vol.In(MADHABS),
+            }))
         identifier_key = CONF_MOSQUE_ID if self.config_entry.data.get(CONF_SOURCE) == SOURCE_MOSQUE else CONF_CITY_ID
         return self.async_show_form(step_id="init", data_schema=vol.Schema({vol.Required(identifier_key, default=self.config_entry.data[identifier_key]): str, vol.Required(CONF_LANGUAGE, default=self.config_entry.data[CONF_LANGUAGE]): vol.In(LANGUAGES)}))
