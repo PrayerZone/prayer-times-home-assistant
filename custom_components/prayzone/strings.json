@@ -1,0 +1,1 @@
+{"config":{"step":{"user":{"title":"PrayerZone","description":"Connect a city to the pray.zone prayer-times API.","data":{"city_id":"City identifier","language":"Language"}}},"error":{"required":"Enter a city identifier."}}}

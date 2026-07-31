@@ -1,0 +1,11 @@
+{
+  "domain": "prayzone",
+  "name": "PrayerZone",
+  "codeowners": ["@PrayerZone"],
+  "config_flow": true,
+  "documentation": "https://github.com/PrayerZone/prayer-times-home-assistant",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/PrayerZone/prayer-times-home-assistant/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}
