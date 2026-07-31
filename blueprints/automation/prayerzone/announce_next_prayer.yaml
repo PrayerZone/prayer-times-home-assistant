@@ -1,0 +1,41 @@
+blueprint:
+  name: PrayerZone - announce next prayer
+  description: Announce the next prayer when the PrayerZone timestamp sensor reaches it.
+  domain: automation
+  input:
+    next_prayer:
+      name: Next prayer timestamp
+      selector:
+        entity:
+          domain: sensor
+          device_class: timestamp
+    notify_service:
+      name: Notification service
+      description: A Home Assistant notify service, for example notify.mobile_app_phone.
+      selector:
+        text:
+    lead_minutes:
+      name: Lead time
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 60
+          step: 1
+          unit_of_measurement: minutes
+
+trigger:
+  - platform: time_pattern
+    minutes: "/1"
+condition:
+  - condition: template
+      value_template: >-
+      {% set value = states(!input next_prayer) %}
+      {{ value not in ['unknown', 'unavailable', 'none'] and
+         (as_timestamp(value) - now().timestamp() - (!input lead_minutes | int * 60)) | abs < 30 }}
+action:
+  - service: !input notify_service
+    data:
+      title: PrayerZone
+      message: "{{ state_attr(!input next_prayer, 'prayer') or 'Next prayer' }}"
+mode: single

@@ -1,0 +1,39 @@
+blueprint:
+  name: PrayerZone - play adhan at the next prayer
+  description: Play an adhan URL on a selected media player at the next PrayerZone prayer.
+  domain: automation
+  input:
+    next_prayer:
+      name: Next prayer timestamp
+      selector:
+        entity:
+          domain: sensor
+          device_class: timestamp
+    media_player:
+      name: Media player
+      selector:
+        entity:
+          domain: media_player
+    adhan_url:
+      name: Adhan media URL
+      description: A URL reachable by the media player.
+      selector:
+        text:
+
+trigger:
+  - platform: time_pattern
+    minutes: "/1"
+condition:
+  - condition: template
+    value_template: >-
+      {% set value = states(!input next_prayer) %}
+      {{ value not in ['unknown', 'unavailable', 'none'] and
+         (as_timestamp(value) - now().timestamp()) | abs < 30 }}
+action:
+  - service: media_player.play_media
+    target:
+      entity_id: !input media_player
+    data:
+      media_content_id: !input adhan_url
+      media_content_type: music
+mode: single

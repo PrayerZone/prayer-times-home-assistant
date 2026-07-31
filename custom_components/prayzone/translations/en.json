@@ -1,1 +1,10 @@
-{"config":{"step":{"user":{"title":"PrayerZone","description":"Connect a city to the pray.zone prayer-times API.","data":{"city_id":"City identifier","language":"Language"}}},"error":{"required":"Enter a city identifier."}}}
+{
+  "config": {
+    "step": {
+      "user": {"title": "PrayerZone", "description": "Choose a city or discover a nearby mosque using your Home Assistant location.", "data": {"source": "Location type", "language": "Language"}},
+      "city": {"title": "Choose a city", "data": {"city_id": "City identifier"}},
+      "mosque": {"title": "Choose a nearby mosque", "description": "Mosques are discovered within 5 km of your Home Assistant location.", "data": {"mosque_id": "Mosque"}}
+    },
+    "error": {"required": "Enter a city identifier.", "no_location": "Set Home Assistant latitude and longitude first.", "no_mosques": "No nearby mosques were found.", "cannot_connect": "Unable to contact pray.zone. Try again later."}
+  }
+}
